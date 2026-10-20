@@ -1,55 +1,49 @@
 # DHANSWING
 
-A mobile-friendly, remotely hosted swing-trading assistant for Dhan. It reads Dhan account data and daily candles, then presents recommendations for you to execute manually.
+A free, static GitHub Pages dashboard for reviewing trading recommendations from Excel or CSV files. Files are read in your browser; this app has no broker connection, backend, or order placement.
 
-## Implemented strategy
+## Run it
 
-- Entry: new 52-week closing high, measured against the prior 252 daily highs.
-- Initial size: ₹1,000 per position; whole shares only. If one share costs over ₹1,000, the app marks the signal as skipped.
-- Average down: only when Supertrend (10, 3) is green and the close is at least 6% below Dhan's average cost. The suggested add is 10% of current shares, rounded up to a whole share, no more often than every seven calendar days.
-- Exit: recommend exiting the full managed position whenever Supertrend is red, regardless of P&L.
-- Manual-only: no order placement, modification, or cancellation code is exposed.
+After GitHub Pages is enabled for this public repository, open:
 
-The scan covers the watchlist you maintain and positions you mark as strategy-managed. It does not scan all NSE stocks yet. Unmanaged holdings are never assigned strategy actions.
+https://jayanthmk.github.io/DHANSWING/
 
-## Run locally
+If the page is not available yet, open repository Settings → Pages, set the build and deployment source to GitHub Actions, and wait for the Publish GitHub Pages workflow to finish. This repository is public, so the webpage itself is public. The uploaded account and price files are processed only in your browser tab and are not sent to GitHub or another server. Refreshing the page clears them.
 
-Requires Python 3.11 or newer.
+GitHub Pages is available at no charge for public repositories on GitHub Free. It serves a static site; it cannot run the former Python backend. This version is deliberately static so it does not need paid cloud hosting.
 
-1. Create a virtual environment, install dependencies from requirements.txt.
-2. Generate a Fernet key with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())".
-3. Set APP_PASSWORD to a strong password and TOKEN_ENCRYPTION_KEY to the generated key. Optionally set DATABASE_PATH; default is data/dhan_swing.sqlite3.
-4. Start with uvicorn app.main:app --reload.
-5. Open http://127.0.0.1:8000. Sign in with username trader and your APP_PASSWORD. Paste the active Dhan access token in the app.
+## Upload formats
 
-Do not put real credentials in Git, .env.example, screenshots, or support requests. Keep the same encryption key across restarts or the saved token cannot be decrypted. Dhan access tokens expire; refresh the token through Dhan and replace it in Settings when needed.
+Download the Excel template from the page. It contains two sheets:
 
-## Host it for travel access (Railway)
+### Positions
 
-1. Create a Railway project and deploy the jayanthmk/DHANSWING GitHub repository.
-2. Add a persistent Railway volume mounted at /data.
-3. Set these service variables:
-   - APP_PASSWORD: a unique, strong password for this dashboard.
-   - TOKEN_ENCRYPTION_KEY: the Fernet key generated above. Store it safely; do not rotate it without reconnecting the Dhan token.
-   - DATABASE_PATH: /data/dhan_swing.sqlite3
-4. Deploy and open the generated HTTPS domain. Sign in, connect Dhan, then add stocks to monitor.
-5. Save that URL on your phone. Refresh the Dhan access token when it expires.
+Columns: Symbol, Quantity, AvgCost, Managed, LastAverageDate.
 
-The app needs outbound HTTPS access to Dhan's API. Railway serves the domain and routes over HTTPS; do not expose the app through an unencrypted host. The SQLite volume holds the encrypted Dhan token, watchlist, and managed-position flags.
+- Use one row per open holding.
+- Set Managed to Yes only for positions this strategy manages.
+- LastAverageDate is optional. Enter it after manually placing an average so the weekly cooldown is respected.
+- Unmanaged positions do not receive exit or averaging recommendations.
 
-## Dhan data used
+### Prices
 
-- Holdings, current positions, order book, and funds are fetched read-only.
-- Historical daily OHLCV comes from Dhan /charts/historical.
-- Signals use completed daily candles; before 3:35 p.m. IST, the current session date is excluded.
-- Add a watchlist row using the NSE symbol and its Dhan security ID.
+Columns: Symbol, Date, Open, High, Low, Close. Volume is optional.
 
-See [Dhan authentication](https://dhanhq.co/docs/v2/authentication/), [portfolio](https://dhanhq.co/docs/v2/portfolio/), [historical data](https://dhanhq.co/docs/v2/historical-data/), and [instrument list](https://dhanhq.co/docs/v2/instruments/).
+- Use one row per symbol per trading day.
+- Upload completed daily bars. For a 52-week signal the symbol needs at least 253 daily rows.
+- The page checks a new closing high against the highest high of the previous 252 sessions.
+- A single workbook can be uploaded, or use separate Positions and Prices CSV/Excel files.
 
-## Security
+Supported files: CSV, XLS, XLSX.
 
-- HTTP Basic authentication protects the dashboard and API.
-- The Dhan token is encrypted at rest using TOKEN_ENCRYPTION_KEY.
-- No browser local storage is used for the broker token.
-- The app does not include any Dhan order-write endpoint.
+## Strategy logic
+
+- Entry: close above the prior 252 sessions' highest high.
+- Initial size: ₹1,000, whole shares only; skip when one share costs more than ₹1,000.
+- Maximum: 200 managed open positions by default; change the limit in the page if needed.
+- Average: when Supertrend (10, 3) is green and price is at least 6% below average cost, suggest adding one tenth of current shares, rounded up, no more often than once every seven calendar days.
+- Exit: when Supertrend is red, recommend exiting the entire managed position regardless of P&L.
+- Manual-only: the page never connects to Dhan or places, modifies, or cancels orders.
+
+The current version depends on the SheetJS browser library from its official CDN to parse Excel and CSV. The file contents are handled in the browser by the page; no upload request is made.
 

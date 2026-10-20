@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101722"><title>DHANSWING · Manual Strategy Assistant</title>
+<link rel="stylesheet" href="./styles.css">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script defer src="./app.js"></script>
+</head><body><main>
+<header><div><p class="eyebrow">PRIVATE FILES STAY IN THIS BROWSER</p><h1>DHANSWING</h1><p class="sub">52-week high entries · average-down reminders · Supertrend exits</p></div><span class="badge">MANUAL TRADING ONLY</span></header>
+<div class="alert"><strong>Local file processing.</strong> Your Excel/CSV data is read in this tab and is not sent to a server. Refreshing the page clears the uploaded data.</div>
+<section class="card"><div class="section-head"><div><h2>1. Load your data</h2><p>Use the sample workbook, or upload a positions file and a daily prices file.</p></div><button id="templateBtn" class="secondary">Download Excel template</button></div>
+<div class="upload-grid">
+<label class="upload"><span>Combined Excel workbook</span><small>Sheets named Positions and Prices</small><input id="combinedFile" type="file" accept=".xlsx,.xls"></label>
+<label class="upload"><span>Positions CSV / Excel</span><small>Symbol, Quantity, AvgCost, Managed, LastAverageDate</small><input id="positionsFile" type="file" accept=".csv,.xlsx,.xls"></label>
+<label class="upload"><span>Daily prices CSV / Excel</span><small>Symbol, Date, Open, High, Low, Close</small><input id="pricesFile" type="file" accept=".csv,.xlsx,.xls"></label>
+</div>
+<div class="row controls"><label>Maximum managed positions <input id="maxPositions" type="number" min="1" max="10000" value="200"></label><button id="analyzeBtn">Analyze files</button><button id="clearBtn" class="secondary">Clear</button></div>
+<div id="fileStatus" class="status" aria-live="polite">No file loaded.</div>
+<details class="help"><summary>What should the files contain?</summary>
+<p><b>Positions:</b> one row per open holding. Use columns Symbol, Quantity, AvgCost, Managed, LastAverageDate. Set Managed to Yes only for positions governed by this strategy. LastAverageDate is optional until you average.</p>
+<p><b>Daily prices:</b> one row per symbol per trading day, with Symbol, Date, Open, High, Low, Close. Include at least 253 completed daily candles per symbol to check a 52-week high. Upload historical prices for the symbols you want to scan.</p>
+<p>The template workbook has both sheets. You can also upload the two CSV files separately. Prices must be daily bars; the app uses the latest date in your file.</p></details>
+</section>
+<section class="card"><div class="section-head"><div><h2>2. Review recommendations</h2><p id="summary">Upload data, then analyze.</p></div></div>
+<div id="results" class="results"><div class="empty">Your recommendations will appear here.</div></div></section>
+<footer>Strategy rules: buy a new 52-week closing high with ₹1,000 initial budget; add about 1/10 of current shares at −6% only while Supertrend (10,3) is green, at most once every 7 days; exit the full managed position whenever Supertrend is red. This page does not place or manage orders.</footer>
+</main></body></html>
